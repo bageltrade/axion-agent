@@ -36,7 +36,8 @@ export const tools: ToolDefinition[] = [
       if (!(await gate(ctx, "read", `read ${args.path}`))) {
         return "Permission denied for read_file";
       }
-      const full = resolve(ctx.workspaceRoot, String(args.path));
+      const rawPath = String(args.path);
+      const full = rawPath.startsWith("/") ? rawPath : resolve(ctx.workspaceRoot, rawPath);
       if (!existsSync(full)) return `File not found: ${args.path}`;
       const raw = readFileSync(full, "utf-8");
       const lines = raw.split("\n");
@@ -62,7 +63,8 @@ export const tools: ToolDefinition[] = [
       if (!(await gate(ctx, "edit", `write ${args.path}`))) {
         return "Permission denied for write_file";
       }
-      const full = resolve(ctx.workspaceRoot, String(args.path));
+      const rawPath = String(args.path);
+      const full = rawPath.startsWith("/") ? rawPath : resolve(ctx.workspaceRoot, rawPath);
       mkdirSync(dirname(full), { recursive: true });
       writeFileSync(full, String(args.content), "utf-8");
       return `Wrote ${String(args.content).length} bytes to ${args.path}`;
@@ -86,7 +88,8 @@ export const tools: ToolDefinition[] = [
       if (!(await gate(ctx, "edit", `edit ${args.path}`))) {
         return "Permission denied for edit_file";
       }
-      const full = resolve(ctx.workspaceRoot, String(args.path));
+      const rawPath = String(args.path);
+      const full = rawPath.startsWith("/") ? rawPath : resolve(ctx.workspaceRoot, rawPath);
       if (!existsSync(full)) return `File not found: ${args.path}`;
       let content = readFileSync(full, "utf-8");
       const old = String(args.old_string);

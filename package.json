@@ -1,7 +1,7 @@
 {
   "name": "axion-agent",
-  "version": "5.0.0",
-  "description": "Axion Agent v5 \u2014 always-on unrestricted source, no jailbreak needed. OpenCode+Codex+Claude+Grok.",
+  "version": "5.0.1",
+  "description": "Axion Agent v5.0.1 \u2014 unrestricted agentic coding agent. NVIDIA-tested.",
   "main": "dist/index.js",
   "type": "module",
   "bin": {

@@ -1,9 +1,9 @@
 {
   "$schema": "./axion.schema.json",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "name": "Axion Agent",
   "default_agent": "build",
-  "default_model": "openrouter/anthropic/claude-sonnet-4",
+  "default_model": "nvidia/nvidia/nemotron-3-super-120b-a12b",
   "providers": {
     "openrouter": {
       "type": "openai-compatible",
@@ -68,17 +68,13 @@
       "baseURL": "https://integrate.api.nvidia.com/v1",
       "apiKeyEnv": "NVIDIA_API_KEY",
       "models": {
+        "nvidia/nemotron-3-super-120b-a12b": {
+          "name": "Nemotron 3 Super 120B",
+          "context": 131072
+        },
         "meta/llama-3.1-405b-instruct": {
           "name": "Llama 3.1 405B",
           "context": 128000
-        },
-        "nvidia/nemotron-4-340b-instruct": {
-          "name": "Nemotron 4 340B",
-          "context": 4096
-        },
-        "mistralai/mixtral-8x22b-instruct": {
-          "name": "Mixtral 8x22B",
-          "context": 65536
         }
       }
     },
