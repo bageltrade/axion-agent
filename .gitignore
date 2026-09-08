@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.axion/sessions/
+.axion/worktrees/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+*.tar.gz

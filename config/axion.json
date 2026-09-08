@@ -1,0 +1,258 @@
+{
+  "$schema": "./axion.schema.json",
+  "version": "5.0.0",
+  "name": "Axion Agent",
+  "default_agent": "build",
+  "default_model": "openrouter/anthropic/claude-sonnet-4",
+  "providers": {
+    "openrouter": {
+      "type": "openai-compatible",
+      "baseURL": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "models": {
+        "anthropic/claude-sonnet-4": {
+          "name": "Claude Sonnet 4",
+          "context": 200000
+        },
+        "anthropic/claude-opus-4": {
+          "name": "Claude Opus 4",
+          "context": 200000
+        },
+        "openai/gpt-5": {
+          "name": "GPT-5",
+          "context": 128000
+        },
+        "google/gemini-2.5-pro": {
+          "name": "Gemini 2.5 Pro",
+          "context": 1000000
+        },
+        "deepseek/deepseek-v3": {
+          "name": "DeepSeek V3",
+          "context": 64000
+        },
+        "meta-llama/llama-4-70b": {
+          "name": "Llama 4 70B",
+          "context": 128000
+        }
+      }
+    },
+    "ollama": {
+      "type": "openai-compatible",
+      "baseURL": "http://localhost:11434/v1",
+      "apiKeyEnv": null,
+      "models": {
+        "qwen2.5-coder:32b": {
+          "name": "Qwen2.5 Coder 32B",
+          "context": 32768,
+          "tools": true
+        },
+        "deepseek-coder-v2:16b": {
+          "name": "DeepSeek Coder V2",
+          "context": 16384,
+          "tools": true
+        },
+        "llama3.1:70b": {
+          "name": "Llama 3.1 70B",
+          "context": 128000,
+          "tools": true
+        },
+        "codellama:34b": {
+          "name": "CodeLlama 34B",
+          "context": 16384,
+          "tools": true
+        }
+      }
+    },
+    "nvidia": {
+      "type": "openai-compatible",
+      "baseURL": "https://integrate.api.nvidia.com/v1",
+      "apiKeyEnv": "NVIDIA_API_KEY",
+      "models": {
+        "meta/llama-3.1-405b-instruct": {
+          "name": "Llama 3.1 405B",
+          "context": 128000
+        },
+        "nvidia/nemotron-4-340b-instruct": {
+          "name": "Nemotron 4 340B",
+          "context": 4096
+        },
+        "mistralai/mixtral-8x22b-instruct": {
+          "name": "Mixtral 8x22B",
+          "context": 65536
+        }
+      }
+    },
+    "openai": {
+      "type": "openai",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "models": {
+        "gpt-5": {
+          "name": "GPT-5",
+          "context": 128000
+        },
+        "o3": {
+          "name": "o3",
+          "context": 200000
+        },
+        "gpt-4.1": {
+          "name": "GPT-4.1",
+          "context": 128000
+        }
+      }
+    },
+    "anthropic": {
+      "type": "anthropic",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "models": {
+        "claude-sonnet-4-20250514": {
+          "name": "Claude Sonnet 4",
+          "context": 200000
+        },
+        "claude-opus-4-20250514": {
+          "name": "Claude Opus 4",
+          "context": 200000
+        },
+        "claude-haiku-4-20250514": {
+          "name": "Claude Haiku 4",
+          "context": 200000
+        }
+      }
+    },
+    "grok": {
+      "type": "openai-compatible",
+      "baseURL": "https://api.x.ai/v1",
+      "apiKeyEnv": "XAI_API_KEY",
+      "models": {
+        "grok-4": {
+          "name": "Grok 4",
+          "context": 128000
+        },
+        "grok-3": {
+          "name": "Grok 3",
+          "context": 128000
+        }
+      }
+    }
+  },
+  "agents": {
+    "build": {
+      "mode": "primary",
+      "description": "Full-access coding agent. Plans, edits, runs commands, iterates until done.",
+      "model": null,
+      "temperature": 0.2,
+      "max_steps": 50,
+      "permissions": {
+        "read": "allow",
+        "edit": "allow",
+        "bash": "ask",
+        "glob": "allow",
+        "grep": "allow",
+        "websearch": "allow",
+        "webfetch": "allow"
+      }
+    },
+    "plan": {
+      "mode": "primary",
+      "description": "Read-only planning agent. Analyzes codebase and produces structured plans without modifying files.",
+      "model": null,
+      "temperature": 0.1,
+      "max_steps": 20,
+      "permissions": {
+        "read": "allow",
+        "edit": "deny",
+        "bash": "ask",
+        "glob": "allow",
+        "grep": "allow",
+        "websearch": "allow",
+        "webfetch": "allow"
+      }
+    },
+    "explore": {
+      "mode": "subagent",
+      "description": "Fast read-only codebase explorer. Find files, search patterns, answer questions.",
+      "model": null,
+      "temperature": 0.0,
+      "max_steps": 15,
+      "permissions": {
+        "read": "allow",
+        "edit": "deny",
+        "bash": "deny",
+        "glob": "allow",
+        "grep": "allow",
+        "websearch": "deny",
+        "webfetch": "deny"
+      }
+    },
+    "review": {
+      "mode": "subagent",
+      "description": "Code reviewer focused on security, performance, bugs, and maintainability.",
+      "model": null,
+      "temperature": 0.1,
+      "max_steps": 15,
+      "permissions": {
+        "read": "allow",
+        "edit": "deny",
+        "bash": "deny",
+        "glob": "allow",
+        "grep": "allow",
+        "websearch": "allow",
+        "webfetch": "allow"
+      }
+    },
+    "debug": {
+      "mode": "subagent",
+      "description": "Debugger. Investigates failures, runs tests, traces root causes.",
+      "model": null,
+      "temperature": 0.1,
+      "max_steps": 25,
+      "permissions": {
+        "read": "allow",
+        "edit": "ask",
+        "bash": "ask",
+        "glob": "allow",
+        "grep": "allow",
+        "websearch": "allow",
+        "webfetch": "allow"
+      }
+    }
+  },
+  "custom_prompt": {
+    "enabled": true,
+    "path": "./prompts/CUSTOM.md",
+    "injection_point": "after_system",
+    "isolated": true,
+    "note": "Custom prompt is appended after the core system prompt. It never overrides agentic tools, permissions, or the agent loop."
+  },
+  "workspace": {
+    "root": ".",
+    "ignore": [
+      ".git",
+      "node_modules",
+      "dist",
+      ".axion",
+      "__pycache__",
+      ".venv"
+    ],
+    "max_file_size_kb": 512,
+    "max_context_files": 40
+  },
+  "safety": {
+    "confirm_destructive": true,
+    "sandbox_bash": false,
+    "max_bash_timeout_sec": 120,
+    "deny_patterns": [
+      "rm -rf /",
+      "mkfs",
+      "dd if=",
+      ":(){ :|:& };:"
+    ]
+  },
+  "session": {
+    "persist": true,
+    "dir": ".axion/sessions",
+    "auto_title": true,
+    "compaction_threshold": 0.75
+  },
+  "unrestricted": true,
+  "unrestricted_note": "Always-on unrestricted source. No jailbreak prompt needed. Set false only to restore base-model refusals."
+}
