@@ -141,3 +141,12 @@ TUI / CLI
 ## License
 
 MIT · built for Axion
+
+## Smoke test (DeepSeek)
+
+```bash
+npm run deepseek   # other terminal
+node scripts/smoke-deepseek.mjs
+```
+
+Expect `SMOKE_OK` and a `bash` tool_call. Under heavy use chat.deepseek.com may rate-limit; wait and retry or use NVIDIA fallback.
