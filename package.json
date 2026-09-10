@@ -1,6 +1,6 @@
 {
   "name": "axion-agent",
-  "version": "8.2.0",
+  "version": "8.2.1",
   "description": "Axion Agent v8.2 \u2014 DeepSeek Lisa overlay + DSML tool fallback + unrestricted",
   "main": "dist/index.js",
   "type": "module",

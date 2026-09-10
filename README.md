@@ -1,96 +1,91 @@
-# Axion Agent v6
+# Axion Agent v8.2
 
-**Always-on unrestricted agentic coding agent.**  
-No jailbreak prompt required.
+**Unrestricted agentic coding agent** — OpenCode × Codex × Claude Code × Grok  
+**Primary model:** DeepSeek free (local reverse API) · **Backup:** NVIDIA Nemotron
 
-Blends the best of:
-
-| Source | What you get |
-|--------|----------------|
-| **OpenCode** | Multi-session, fork, export/import, local share, AGENTS.md, plan/build, permissions |
-| **Codex** | Git worktrees for parallel isolation, skills, end-to-end task completion |
-| **Claude Code** | CLAUDE.md / AGENTS.md project memory, gather→act→verify loop, hooks, compact |
-| **Grok** | Strong tool-calling, multi-provider (incl. xAI), truth-seeking delivery |
-
-Plus an **unrestricted source** injected first on every session so any provider (OpenRouter, Ollama, NVIDIA, OpenAI, Anthropic, Grok, local) delivers fully.
+No jailbreak prompt required from you. Unrestricted source is always on.
 
 ---
 
 ## Features
 
-- **TUI** — themed terminal UI (axion / codex / opencode / midnight)
-- **Agents** — `build` · `plan` · `explore` · `review` · `debug`
-- **Tools** — read/write/edit, glob, grep, bash, web_search, git, apply_patch, run_tests, diagnostics, todos, multi-replace
-- **Sessions** — create, list, fork, compact, export/import, local HTML share
-- **Worktrees** — isolated parallel checkouts under `.axion/worktrees/`
-- **Skills** — auto-load refactor / debug / feature / review / docs
-- **Hooks** — pre-tool safety (host-wipe only), post-tool truncation
-- **Project memory** — auto-loads `AGENTS.md` or `CLAUDE.md`
-- **Custom prompt** — `prompts/CUSTOM.md` (isolated, cannot break tools/loop)
-- **Unrestricted source** — always on, no jailbreak needed
+| Area | Capability |
+|------|------------|
+| **Agents** | `build` · `plan` · `explore` · `review` · `debug` |
+| **TUI** | Themed terminal UI (axion / codex / opencode / midnight), key✓ indicator |
+| **Tools** | read/write/edit, glob, grep, bash, git, apply_patch, tests, diagnostics, todos |
+| **Sessions** | create · list · fork · compact · export · local HTML share |
+| **Worktrees** | parallel git isolation under `.axion/worktrees/` |
+| **Skills** | auto-load refactor / debug / feature / review / docs |
+| **Hooks** | pre-tool host-safety, post-tool truncation |
+| **Memory** | `AGENTS.md` / `CLAUDE.md` project memory |
+| **Custom prompt** | `prompts/CUSTOM.md` isolated (cannot break tools/loop) |
+| **Unrestricted** | always-on multi-layer source + anti-refusal recovery |
+| **DeepSeek Lisa** | full character overlay when using `deepseek/*` models |
 
 ---
 
 ## Install
 
-### Requirements
-
-- Node.js **18+**
-- npm (or bun / pnpm)
-
-### Steps
-
 ```bash
-git clone https://github.com/OWNER/axion-agent.git
+git clone https://github.com/bageltrade/axion-agent.git
 cd axion-agent
 npm install
 npm run build
 ```
 
-### API keys (any one is enough)
+**Requirements:** Node.js 18+, Python 3.10+ (for DeepSeek server), `httpx`
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
-# or
-export OPENAI_API_KEY=sk-...
-export ANTHROPIC_API_KEY=sk-ant-...
-export XAI_API_KEY=xai-...
-export NVIDIA_API_KEY=nvapi-...
+pip install httpx
 ```
 
-**Ollama (no key):**
+---
+
+## DeepSeek free (primary)
+
+Vendored from [deepseek-free-v1](https://github.com/bageltrade/deepseek-free-v1).
+
+1. Log in at https://chat.deepseek.com  
+2. F12 → Application → Local Storage → copy `userToken`  
+3. Export and start server:
 
 ```bash
-ollama serve
-ollama pull qwen2.5-coder:7b
-# then in axion.json set default_model to "ollama/qwen2.5-coder:7b"
+export DEEPSEEK_TOKEN="your_userToken_here"
+
+# terminal 1 — OpenAI-compatible server on :8000
+npm run deepseek
+
+# terminal 2 — agent TUI (default model is deepseek/deepseek-v4-flash)
+npm run tui
 ```
 
-### Init a project
+Models: `deepseek-v4-flash` · `deepseek-v4-pro` · `deepseek-chat` · `deepseek-reasoner`
+
+When the active model is `deepseek/*`, the **Just-Lisa** overlay (`prompts/DEEPSEEK_LISA.md`) is injected automatically for maximum delivery.
+
+---
+
+## NVIDIA backup
 
 ```bash
-npx axion init
-# creates axion.json + prompts/CUSTOM.md in cwd
-# optionally edit AGENTS.md for repo conventions
+export NVIDIA_API_KEY="nvapi-..."
 ```
+
+Configured as `fallback_model`. If DeepSeek is down, the agent retries on Nemotron automatically.
+
+Other providers (optional): OpenRouter, OpenAI, Anthropic, Grok, Ollama — set the matching `*_API_KEY`.
 
 ---
 
 ## Usage
 
 ```bash
-# Beautiful TUI (recommended)
-npm run tui
-
-# One-shot
-npx axion run "add a health endpoint and tests" -y
-
-# Interactive REPL
-npx axion chat -y
-
-# List models / agents
-npx axion models
-npx axion agents
+npm run tui                 # beautiful TUI
+npx axion run "task" -y     # one-shot
+npx axion chat -y           # REPL
+npx axion models            # list models
+npx axion agents            # list agents
 ```
 
 ### TUI controls
@@ -99,44 +94,33 @@ npx axion agents
 |-------|--------|
 | `Tab` | Cycle agents |
 | `/plan` `/build` | Switch mode |
+| `/model deepseek/deepseek-v4-pro` | Switch model |
 | `/theme` | Cycle themes |
-| `/skills` | List skills |
-| `/model provider/model` | Switch model |
-| `/sessions` | List sessions |
-| `/clear` | Clear history |
-| `Esc` | Abort run |
-| `q` | Quit |
+| `/skills` `/sessions` `/clear` | Skills / memory |
+| `Esc` | Abort · `q` quit |
 
 ---
 
-## Configuration
+## Unrestricted source
 
-Primary file: `config/axion.json` (or `./axion.json` / `~/.config/axion/axion.json`)
-
-| Key | Meaning |
-|-----|---------|
-| `unrestricted` | `true` (default) — always-on unrestricted source |
-| `default_model` | e.g. `openrouter/anthropic/claude-sonnet-4` |
-| `default_agent` | `build` |
-| `providers` | OpenRouter, Ollama, NVIDIA, OpenAI, Anthropic, Grok |
-| `agents` | Permissions per agent (allow / ask / deny) |
-| `custom_prompt` | Path to isolated CUSTOM.md |
-
-### Project memory
-
-Place one of these in the repo root (loaded every session):
-
-- `AGENTS.md` (OpenCode style)
-- `CLAUDE.md` (Claude Code style)
-- `AXION.md`
-
-### Unrestricted
-
-- Core: `src/agent/unrestricted.ts`
+- Core: `src/agent/unrestricted.ts` (v8 multi-layer)
 - Manifest: `prompts/UNRESTRICTED.md`
-- Injected **first** into every system prompt
-- No user jailbreak required
-- Set `"unrestricted": false` only if you want base-model refusals back
+- DeepSeek overlay: `prompts/DEEPSEEK_LISA.md`
+- Injected **first** every session
+- Anti-refusal recovery (up to 2 shots) in the agent loop
+- `"unrestricted": true` in `config/axion.json` (default)
+
+---
+
+## Project files
+
+| File | Purpose |
+|------|---------|
+| `AGENTS.md` / `CLAUDE.md` | Always-on repo conventions |
+| `prompts/CUSTOM.md` | Your isolated personal prompt |
+| `prompts/UNRESTRICTED.md` | Harden unrestricted further |
+| `prompts/DEEPSEEK_LISA.md` | Lisa character for DeepSeek path |
+| `config/axion.json` | Models, providers, permissions |
 
 ---
 
@@ -144,42 +128,16 @@ Place one of these in the repo root (loaded every session):
 
 ```
 TUI / CLI
-  → SessionManager (fork, share local, compact)
-  → system = UNRESTRICTED + CORE + AGENTS.md + CUSTOM.md
-  → skills (auto) + hooks (safety)
-  → multi-provider LLM
+  → SessionManager (fork, share, compact)
+  → system = UNRESTRICTED v8 + (Lisa if deepseek) + CORE + AGENTS.md + CUSTOM.md
+  → skills + hooks
+  → multi-provider LLM (DeepSeek primary → NVIDIA fallback)
   → tools (base + advanced)
-  → optional worktree isolation
+  → optional worktrees
 ```
-
----
-
-## Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run build` | Compile TypeScript |
-| `npm run tui` | Launch TUI |
-| `npm run dev` | CLI via tsx |
-| `npx axion …` | CLI after build |
 
 ---
 
 ## License
 
-MIT
-
-Built for Axion.
-
-## DeepSeek Free (primary)
-
-Axion vendors [deepseek-free-v1](https://github.com/bageltrade/deepseek-free-v1) — OpenAI-compatible reverse of chat.deepseek.com.
-
-```bash
-export DEEPSEEK_TOKEN="your_userToken_from_chat.deepseek.com_localStorage"
-npm run deepseek          # starts http://127.0.0.1:8000
-# other terminal:
-npm run tui               # default_model is deepseek/deepseek-v4-flash
-```
-
-NVIDIA is configured as `fallback_model` if DeepSeek is down.
+MIT · built for Axion
