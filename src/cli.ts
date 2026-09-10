@@ -1,3 +1,4 @@
+import "dotenv/config";
 #!/usr/bin/env node
 import { Command } from "commander";
 import chalk from "chalk";

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Axion TUI v3 — beautiful blend of OpenCode polish + Codex density.
+ * Axion TUI v6 — OpenCode × Codex density, screenshot-matched polish
  */
-import React, { useState, useCallback } from "react";
+import "dotenv/config";
+import React, { useState, useCallback, useMemo } from "react";
 import { render, Box, Text, useInput, useApp, Spacer } from "ink";
 import Spinner from "ink-spinner";
 import TextInput from "ink-text-input";
@@ -26,32 +27,59 @@ function clock() {
   return new Date().toLocaleTimeString("en-GB", { hour12: false });
 }
 
-function Header({ theme, agent, model, sessionId, mode, skillName }: any) {
+function Header({
+  theme,
+  agent,
+  model,
+  sessionId,
+  mode,
+  skillName,
+}: {
+  theme: Theme;
+  agent: string;
+  model: string;
+  sessionId: string;
+  mode: "idle" | "running" | "ask";
+  skillName?: string;
+}) {
   const modeLabel = mode === "running" ? "● RUN" : mode === "ask" ? "● ASK" : "○ IDLE";
-  const modeColor = mode === "running" ? theme.warning : mode === "ask" ? theme.system : theme.success;
+  const modeColor =
+    mode === "running" ? theme.warning : mode === "ask" ? theme.system : theme.success;
+  const shortModel = model.length > 36 ? model.slice(0, 34) + "…" : model;
   return (
-    <Box flexDirection="column" borderStyle="double" borderColor={theme.border} paddingX={1}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.border as any} paddingX={1}>
       <Box>
-        <Text bold color={theme.accent}>⚡ AXION</Text>
-        <Text dimColor> v3 </Text>
-        <Text color={theme.muted}>│</Text>
-        <Text bold color={theme.accentDim}> {agent.toUpperCase()} </Text>
-        <Text color={theme.muted}>│</Text>
-        <Text dimColor> {model.length > 42 ? model.slice(0, 40) + "…" : model} </Text>
+        <Text bold color={theme.accent as any}>
+          ⚡ AXION
+        </Text>
+        <Text dimColor> v6 </Text>
+        <Text color={theme.muted as any}>│</Text>
+        <Text bold color={theme.accentDim as any}>
+          {" "}
+          {agent.toUpperCase()}{" "}
+        </Text>
+        <Text color={theme.muted as any}>│</Text>
+        <Text dimColor> {shortModel} </Text>
         <Spacer />
-        {skillName ? <Text color={theme.system}>skill:{skillName} </Text> : null}
-        <Text color={modeColor}>{modeLabel}</Text>
-        <Text dimColor>  {sessionId}</Text>
+        {skillName ? (
+          <Text color={theme.system as any}>
+            skill:{skillName}{" "}
+          </Text>
+        ) : null}
+        <Text color={modeColor as any}>{modeLabel}</Text>
+        <Text dimColor> {sessionId.slice(0, 8)}</Text>
       </Box>
       <Box>
-        <Text dimColor>tab agents · /plan /build /theme /skills /model /clear /sessions · esc abort · q quit</Text>
+        <Text dimColor>
+          tab agents · /plan /build /theme /skills /model /clear /sessions · esc abort · q quit
+        </Text>
       </Box>
     </Box>
   );
 }
 
 function LogView({ entries, theme }: { entries: LogEntry[]; theme: Theme }) {
-  const shown = entries.slice(-28);
+  const shown = entries.slice(-32);
   const colorFor = (k: LogEntry["kind"]) => {
     if (k === "user") return theme.user;
     if (k === "assistant") return theme.assistant;
@@ -71,14 +99,17 @@ function LogView({ entries, theme }: { entries: LogEntry[]; theme: Theme }) {
     return "•";
   };
   return (
-    <Box flexDirection="column" flexGrow={1} paddingX={1}>
+    <Box flexDirection="column" flexGrow={1} paddingX={1} marginY={0}>
       {shown.length === 0 ? (
-        <Text dimColor>waiting for your first task…</Text>
+        <Text dimColor>Axion ready — type a task or /help</Text>
       ) : (
         shown.map((e) => (
           <Box key={e.id}>
             <Text dimColor>{e.ts} </Text>
-            <Text color={colorFor(e.kind) as any}>{prefix(e.kind)} {e.text.slice(0, 110)}{e.text.length > 110 ? "…" : ""}</Text>
+            <Text color={colorFor(e.kind) as any}>
+              {prefix(e.kind)} {e.text.slice(0, 120)}
+              {e.text.length > 120 ? "…" : ""}
+            </Text>
           </Box>
         ))
       )}
@@ -86,45 +117,110 @@ function LogView({ entries, theme }: { entries: LogEntry[]; theme: Theme }) {
   );
 }
 
-function StatusBar({ theme, steps, toolsUsed, lastTool, themeName }: any) {
+function StatusBar({
+  theme,
+  steps,
+  toolsUsed,
+  lastTool,
+  themeName,
+  keyOk,
+}: {
+  theme: Theme;
+  steps: number;
+  toolsUsed: number;
+  lastTool: string;
+  themeName: string;
+  keyOk: boolean;
+}) {
   return (
-    <Box borderStyle="single" borderColor={theme.muted} paddingX={1}>
-      <Text dimColor>steps {steps} · tools {toolsUsed}{lastTool ? ` · ${lastTool}` : ""}</Text>
+    <Box borderStyle="single" borderColor={theme.muted as any} paddingX={1}>
+      <Text dimColor>
+        steps {steps} · tools {toolsUsed}
+        {lastTool ? ` · ${lastTool}` : ""}
+      </Text>
       <Spacer />
-      <Text dimColor>theme:{themeName} · OpenCode×Codex×Claude×Grok</Text>
+      <Text color={(keyOk ? theme.success : theme.error) as any}>
+        {keyOk ? "key✓" : "key✗"}
+      </Text>
+      <Text dimColor>
+        {" "}
+        · theme:{themeName} · OpenCode×Codex×Claude×Grok
+      </Text>
     </Box>
   );
 }
 
-function InputBar({ theme, value, onChange, onSubmit, disabled }: any) {
+function InputBar({
+  theme,
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+}: {
+  theme: Theme;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: (v: string) => void;
+  disabled: boolean;
+}) {
   return (
-    <Box borderStyle="round" borderColor={disabled ? theme.muted : theme.accent} paddingX={1}>
-      <Text color={theme.accent}>{disabled ? "⋯ " : "› "}</Text>
+    <Box
+      borderStyle="round"
+      borderColor={(disabled ? theme.muted : theme.accent) as any}
+      paddingX={1}
+    >
+      <Text color={theme.accent as any}>{disabled ? "⋯ " : "› "}</Text>
       {disabled ? (
-        <Text color={theme.warning}><Spinner type="dots" /> agent working…</Text>
+        <Text color={theme.warning as any}>
+          <Spinner type="dots" /> agent working…
+        </Text>
       ) : (
-        <TextInput value={value} onChange={onChange} onSubmit={onSubmit} placeholder="describe a task — or /help" />
+        <TextInput
+          value={value}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          placeholder="describe a task — or /help"
+        />
       )}
     </Box>
   );
 }
 
+function hasProviderKey(cfg: AxionConfig, modelRef: string): boolean {
+  const provider = modelRef.split("/")[0];
+  const p = cfg.providers?.[provider];
+  if (!p) return false;
+  if (!p.apiKeyEnv) return true; // ollama etc
+  return !!process.env[p.apiKeyEnv];
+}
+
 function App() {
   const { exit } = useApp();
   const [cfg] = useState<AxionConfig>(() => loadConfig());
-  const [store] = useState(() => { ensureSessionDir(cfg); return new SessionStore(cfg); });
-  const [session] = useState(() => store.create(cfg.default_agent, resolveModel(cfg, cfg.default_agent), "tui-v3"));
+  const [store] = useState(() => {
+    ensureSessionDir(cfg);
+    return new SessionStore(cfg);
+  });
+  const [session] = useState(() =>
+    store.create(cfg.default_agent, resolveModel(cfg, cfg.default_agent), "tui-v6")
+  );
   const [agent, setAgent] = useState(cfg.default_agent);
   const [model, setModel] = useState(resolveModel(cfg, cfg.default_agent));
   const [themeName, setThemeName] = useState("axion");
   const theme = getTheme(themeName);
   const [mode, setMode] = useState<"idle" | "running" | "ask">("idle");
   const [input, setInput] = useState("");
-  const [logs, setLogs] = useState<LogEntry[]>([{
-    id: 0, kind: "system",
-    text: "Axion v3 ready — beautiful TUI · skills · hooks · multi-provider. Type a task or /help",
-    ts: clock(),
-  }]);
+  const keyOk = useMemo(() => hasProviderKey(cfg, model), [cfg, model]);
+  const [logs, setLogs] = useState<LogEntry[]>([
+    {
+      id: 0,
+      kind: "system",
+      text: keyOk
+        ? "Axion v6 ready — TUI · skills · hooks · unrestricted · multi-provider. Type a task or /help"
+        : `Missing API key for ${model.split("/")[0]}. Set ${cfg.providers?.[model.split("/")[0]]?.apiKeyEnv || "API_KEY"} (e.g. export or ~/.bashrc)`,
+      ts: clock(),
+    },
+  ]);
   const [steps, setSteps] = useState(0);
   const [toolsUsed, setToolsUsed] = useState(0);
   const [lastTool, setLastTool] = useState("");
@@ -133,11 +229,17 @@ function App() {
   const [activeSkill, setActiveSkill] = useState<string | undefined>();
 
   const push = useCallback((kind: LogEntry["kind"], text: string) => {
-    setLogId((id) => { setLogs((prev) => [...prev, { id, kind, text, ts: clock() }]); return id + 1; });
+    setLogId((id) => {
+      setLogs((prev) => [...prev, { id, kind, text, ts: clock() }]);
+      return id + 1;
+    });
   }, []);
 
   useInput((ch, key) => {
-    if (key.escape && mode === "running") { push("status", "abort requested"); setMode("idle"); }
+    if (key.escape && mode === "running") {
+      push("status", "abort requested");
+      setMode("idle");
+    }
     if (ch === "q" && mode === "idle" && !input) exit();
     if (key.tab && mode === "idle") {
       setAgent((a) => {
@@ -150,12 +252,20 @@ function App() {
 
   const runTask = async (task: string) => {
     if (!task.trim() || mode === "running") return;
+    if (!hasProviderKey(cfg, model)) {
+      const envName = cfg.providers?.[model.split("/")[0]]?.apiKeyEnv || "API_KEY";
+      push("error", `Missing API key for ${model.split("/")[0]}. Set ${envName}`);
+      return;
+    }
     setMode("running");
     push("user", task);
     setInput("");
+
     const skill = matchSkill(task, listSkills());
-    if (skill) { setActiveSkill(skill.id); push("skill", `loaded ${skill.name}`); }
-    else setActiveSkill(undefined);
+    if (skill) {
+      setActiveSkill(skill.id);
+      push("skill", `loaded ${skill.name}`);
+    } else setActiveSkill(undefined);
 
     try {
       const result = await runAgentLoop({
@@ -197,19 +307,59 @@ function App() {
     const v = value.trim();
     if (!v) return;
     if (v === "/help") {
-      push("system", "/plan /build /agent <n> /model <ref> /theme <axion|codex|opencode|midnight> /skills /clear /sessions /quit");
-      setInput(""); return;
+      push(
+        "system",
+        "/plan /build /agent <n> /model <ref> /theme /skills /clear /sessions /quit — tab cycles agents"
+      );
+      setInput("");
+      return;
     }
-    if (v === "/quit" || v === "/exit") { exit(); return; }
+    if (v === "/quit" || v === "/exit") {
+      exit();
+      return;
+    }
     if (v === "/clear") {
-      setHistory([]); setLogs([]); setSteps(0); setToolsUsed(0); setLastTool("");
-      push("system", "cleared"); setInput(""); return;
+      setHistory([]);
+      setLogs([]);
+      setSteps(0);
+      setToolsUsed(0);
+      setLastTool("");
+      push("system", "cleared");
+      setInput("");
+      return;
     }
-    if (v === "/plan") { setAgent("plan"); push("status", "agent → plan"); setInput(""); return; }
-    if (v === "/build") { setAgent("build"); push("status", "agent → build"); setInput(""); return; }
-    if (v.startsWith("/agent ")) { setAgent(v.slice(7).trim()); push("status", `agent → ${v.slice(7).trim()}`); setInput(""); return; }
-    if (v.startsWith("/model ")) { setModel(v.slice(7).trim()); push("status", `model → ${v.slice(7).trim()}`); setInput(""); return; }
-    if (v.startsWith("/theme ")) { const t = v.slice(7).trim(); setThemeName(t); push("status", `theme → ${t}`); setInput(""); return; }
+    if (v === "/plan") {
+      setAgent("plan");
+      push("status", "agent → plan");
+      setInput("");
+      return;
+    }
+    if (v === "/build") {
+      setAgent("build");
+      push("status", "agent → build");
+      setInput("");
+      return;
+    }
+    if (v.startsWith("/agent ")) {
+      setAgent(v.slice(7).trim());
+      push("status", `agent → ${v.slice(7).trim()}`);
+      setInput("");
+      return;
+    }
+    if (v.startsWith("/model ")) {
+      const m = v.slice(7).trim();
+      setModel(m);
+      push("status", `model → ${m}`);
+      setInput("");
+      return;
+    }
+    if (v.startsWith("/theme ")) {
+      const t = v.slice(7).trim();
+      setThemeName(t);
+      push("status", `theme → ${t}`);
+      setInput("");
+      return;
+    }
     if (v === "/theme") {
       setThemeName((t) => {
         const order = ["axion", "codex", "opencode", "midnight"];
@@ -217,26 +367,52 @@ function App() {
         push("status", `theme → ${next}`);
         return next;
       });
-      setInput(""); return;
+      setInput("");
+      return;
     }
     if (v === "/skills") {
       push("system", listSkills().map((s) => `${s.id}:${s.name}`).join(" · "));
-      setInput(""); return;
+      setInput("");
+      return;
     }
     if (v === "/sessions") {
       const list = store.list();
-      push("system", list.length ? list.map((s) => `${s.id}[${s.agent}]`).join(" · ") : "no sessions yet");
-      setInput(""); return;
+      push(
+        "system",
+        list.length ? list.map((s) => `${s.id}[${s.agent}]`).join(" · ") : "no sessions yet"
+      );
+      setInput("");
+      return;
     }
     runTask(v);
   };
 
   return (
     <Box flexDirection="column" height="100%" width="100%">
-      <Header theme={theme} agent={agent} model={model} sessionId={session.id} mode={mode} skillName={activeSkill} />
+      <Header
+        theme={theme}
+        agent={agent}
+        model={model}
+        sessionId={session.id}
+        mode={mode}
+        skillName={activeSkill}
+      />
       <LogView entries={logs} theme={theme} />
-      <StatusBar theme={theme} steps={steps} toolsUsed={toolsUsed} lastTool={lastTool} themeName={themeName} />
-      <InputBar theme={theme} value={input} onChange={setInput} onSubmit={onSubmit} disabled={mode === "running"} />
+      <StatusBar
+        theme={theme}
+        steps={steps}
+        toolsUsed={toolsUsed}
+        lastTool={lastTool}
+        themeName={themeName}
+        keyOk={keyOk}
+      />
+      <InputBar
+        theme={theme}
+        value={input}
+        onChange={setInput}
+        onSubmit={onSubmit}
+        disabled={mode === "running"}
+      />
     </Box>
   );
 }

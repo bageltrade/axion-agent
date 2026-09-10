@@ -1,4 +1,4 @@
-# Axion Agent v5
+# Axion Agent v6
 
 **Always-on unrestricted agentic coding agent.**  
 No jailbreak prompt required.
