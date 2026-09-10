@@ -57,7 +57,7 @@ export async function runAgentLoop(opts: {
   let client = createClient(cfg, modelRef);
   const fallbackRef = (cfg as any).fallback_model as string | undefined;
 
-  let system = buildSystemPrompt(cfg, agent, agentName);
+  let system = buildSystemPrompt(cfg, agent, agentName, modelRef);
   const skills = listSkills();
   const skill =
     (opts.skillId && skills.find((s) => s.id === opts.skillId)) ||

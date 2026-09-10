@@ -1,7 +1,7 @@
 {
   "name": "axion-agent",
-  "version": "8.1.0",
-  "description": "Axion Agent v8.1 \u2014 DeepSeek free primary + NVIDIA backup + unrestricted v8",
+  "version": "8.2.0",
+  "description": "Axion Agent v8.2 \u2014 DeepSeek Lisa overlay + DSML tool fallback + unrestricted",
   "main": "dist/index.js",
   "type": "module",
   "bin": {

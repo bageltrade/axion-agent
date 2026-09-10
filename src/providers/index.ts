@@ -74,6 +74,55 @@ export function createClient(cfg: AxionConfig, modelRef: string): LLMClient {
   };
 }
 
+
+/** Parse DeepSeek DSML tool markup from content when server didn't map to tool_calls */
+function parseDsmlToolCalls(content: string): Array<{ id: string; type: string; function: { name: string; arguments: string } }> {
+  if (!content || !content.includes("DSML")) return [];
+  const calls: Array<{ id: string; type: string; function: { name: string; arguments: string } }> = [];
+  const invokeRe = /<\|?DSML\|?invoke\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/\|?DSML\|?invoke>/gi;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = invokeRe.exec(content)) !== null) {
+    const name = m[1];
+    const body = m[2];
+    const args: Record<string, unknown> = {};
+    const paramRe = /<\|?DSML\|?parameter\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/\|?DSML\|?parameter>/gi;
+    let pm: RegExpExecArray | null;
+    while ((pm = paramRe.exec(body)) !== null) {
+      args[pm[1]] = pm[2].trim();
+    }
+    calls.push({
+      id: `call_dsml_${Date.now()}_${i++}`,
+      type: "function",
+      function: { name, arguments: JSON.stringify(args) },
+    });
+  }
+  // also handle the fullwidth-pipe style used by DeepSeek
+  if (calls.length === 0) {
+    const inv2 = /invoke name="([^"]+)"[^>]*>([\s\S]*?)(?:invoke>|$)/gi;
+    while ((m = inv2.exec(content)) !== null) {
+      const name = m[1];
+      const body = m[2];
+      const args: Record<string, unknown> = {};
+      const paramRe = /parameter name="([^"]+)"[^>]*>([\s\S]*?)(?:parameter>|$)/gi;
+      let pm: RegExpExecArray | null;
+      while ((pm = paramRe.exec(body)) !== null) {
+        let v = pm[2].trim();
+        v = v.replace(/<\/?\|?DSML\|?[^>]*>/g, "").trim();
+        args[pm[1]] = v;
+      }
+      if (name) {
+        calls.push({
+          id: `call_dsml_${Date.now()}_${i++}`,
+          type: "function",
+          function: { name, arguments: JSON.stringify(args) },
+        });
+      }
+    }
+  }
+  return calls;
+}
+
 async function callOpenAICompatible(opts: {
   baseURL: string;
   apiKey: string;
@@ -135,10 +184,20 @@ async function callOpenAICompatible(opts: {
   const data = await res.json();
   const choice = data.choices?.[0];
   if (!choice) throw new Error("No choices in LLM response");
+  let content = choice.message?.content ?? null;
+  let tool_calls = choice.message?.tool_calls;
+  if ((!tool_calls || tool_calls.length === 0) && content && content.includes("DSML")) {
+    const parsed = parseDsmlToolCalls(content);
+    if (parsed.length) {
+      tool_calls = parsed;
+      // strip dsml from visible content
+      content = content.replace(/<\|?DSML\|?[\s\S]*$/g, "").trim() || null;
+    }
+  }
   return {
-    content: choice.message?.content ?? null,
-    tool_calls: choice.message?.tool_calls,
-    finish_reason: choice.finish_reason || "stop",
+    content,
+    tool_calls,
+    finish_reason: tool_calls?.length ? "tool_calls" : (choice.finish_reason || "stop"),
   };
 }
 

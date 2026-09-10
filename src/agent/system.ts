@@ -38,10 +38,28 @@ export function loadCustomPrompt(cfg: AxionConfig): string {
   }
 }
 
+
+export function loadDeepseekLisaPrompt(cfg: AxionConfig): string {
+  const candidates = [
+    cfg.workspace?.root ? `${cfg.workspace.root}/prompts/DEEPSEEK_LISA.md` : "",
+    "prompts/DEEPSEEK_LISA.md",
+  ].filter(Boolean);
+  for (const p of candidates) {
+    try {
+      if (existsSync(p)) {
+        const t = readFileSync(p, "utf-8").trim();
+        if (t) return `\n\n--- DEEPSEEK LISA OVERLAY ---\n${t}\n--- END LISA ---\n`;
+      }
+    } catch { /* skip */ }
+  }
+  return "";
+}
+
 export function buildSystemPrompt(
   cfg: AxionConfig,
   agent: AgentConfig,
-  agentName: string
+  agentName: string,
+  modelRef?: string
 ): string {
   const unrestricted = unrestrictedBlock({
     unrestricted: (cfg as any).unrestricted !== false,
@@ -49,6 +67,11 @@ export function buildSystemPrompt(
   });
 
   let sys = unrestricted + CORE_SYSTEM;
+  // DeepSeek path: Lisa overlay for maximum delivery
+  const ref = modelRef || (cfg as any).default_model || "";
+  if (String(ref).startsWith("deepseek/") || process.env.AXION_FORCE_LISA === "1") {
+    sys += loadDeepseekLisaPrompt(cfg);
+  }
   sys += `\n\nActive agent: ${agentName} (mode=${agent.mode}, max_steps=${agent.max_steps})`;
   sys += `\nPermissions: ${JSON.stringify(agent.permissions)}`;
   if (agent.system_extra) sys += `\n\nAgent-specific:\n${agent.system_extra}`;
