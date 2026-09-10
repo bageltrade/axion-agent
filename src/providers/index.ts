@@ -77,47 +77,43 @@ export function createClient(cfg: AxionConfig, modelRef: string): LLMClient {
 
 /** Parse DeepSeek DSML tool markup from content when server didn't map to tool_calls */
 function parseDsmlToolCalls(content: string): Array<{ id: string; type: string; function: { name: string; arguments: string } }> {
-  if (!content || !content.includes("DSML")) return [];
+  if (!content) return [];
   const calls: Array<{ id: string; type: string; function: { name: string; arguments: string } }> = [];
-  const invokeRe = /<\|?DSML\|?invoke\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/\|?DSML\|?invoke>/gi;
-  let m: RegExpExecArray | null;
   let i = 0;
-  while ((m = invokeRe.exec(content)) !== null) {
-    const name = m[1];
-    const body = m[2];
-    const args: Record<string, unknown> = {};
-    const paramRe = /<\|?DSML\|?parameter\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/\|?DSML\|?parameter>/gi;
-    let pm: RegExpExecArray | null;
-    while ((pm = paramRe.exec(body)) !== null) {
-      args[pm[1]] = pm[2].trim();
-    }
+  const push = (name: string, args: Record<string, unknown>) => {
+    if (!name) return;
     calls.push({
       id: `call_dsml_${Date.now()}_${i++}`,
       type: "function",
       function: { name, arguments: JSON.stringify(args) },
     });
+  };
+  // Official DSML invoke blocks
+  const invokeRe = /invoke\s+name="([^"]+)"[^>]*>([\s\S]*?)(?:<\/?[^>]*invoke>|\n\s*<\/)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = invokeRe.exec(content)) !== null) {
+    const name = m[1];
+    const body = m[2];
+    const args: Record<string, unknown> = {};
+    const paramRe = /parameter\s+name="([^"]+)"[^>]*>([\s\S]*?)(?:<\/?[^>]*parameter>|$)/gi;
+    let pm: RegExpExecArray | null;
+    while ((pm = paramRe.exec(body)) !== null) {
+      let v = pm[2].trim();
+      v = v.replace(/<[^>]+>/g, "").replace(/\|?DSML\|?/g, "").trim();
+      if (pm[1]) args[pm[1]] = v;
+    }
+    push(name, args);
   }
-  // also handle the fullwidth-pipe style used by DeepSeek
-  if (calls.length === 0) {
-    const inv2 = /invoke name="([^"]+)"[^>]*>([\s\S]*?)(?:invoke>|$)/gi;
-    while ((m = inv2.exec(content)) !== null) {
-      const name = m[1];
-      const body = m[2];
-      const args: Record<string, unknown> = {};
-      const paramRe = /parameter name="([^"]+)"[^>]*>([\s\S]*?)(?:parameter>|$)/gi;
-      let pm: RegExpExecArray | null;
-      while ((pm = paramRe.exec(body)) !== null) {
-        let v = pm[2].trim();
-        v = v.replace(/<\/?\|?DSML\|?[^>]*>/g, "").trim();
-        args[pm[1]] = v;
-      }
-      if (name) {
-        calls.push({
-          id: `call_dsml_${Date.now()}_${i++}`,
-          type: "function",
-          function: { name, arguments: JSON.stringify(args) },
-        });
-      }
+  // Fallback: name="write_file" ... path ... content patterns in prose
+  if (calls.length === 0 && /write_file|bash|read_file/.test(content)) {
+    const pathM = content.match(/path["\s:=]+["']?([^"'\s]+)["']?/i);
+    const cmdM = content.match(/command["\s:=]+["']([^"']+)["']/i);
+    if (pathM && /write_file/.test(content)) {
+      const contentM = content.match(/content["\s:=]+["']([\s\S]*?)["']\s*$/i)
+        || content.match(/```[\w]*\n([\s\S]*?)```/);
+      push("write_file", { path: pathM[1], content: contentM ? contentM[1] : "" });
+    } else if (cmdM) {
+      push("bash", { command: cmdM[1] });
     }
   }
   return calls;

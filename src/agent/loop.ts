@@ -12,6 +12,25 @@ import {
   runPostHooks,
 } from "../hooks/index.js";
 
+function isEmptyArgs(argsJson: string | undefined): boolean {
+  if (!argsJson || !argsJson.trim()) return true;
+  try {
+    const o = JSON.parse(argsJson);
+    if (!o || typeof o !== "object") return true;
+    return Object.keys(o).length === 0;
+  } catch {
+    return true;
+  }
+}
+
+const EMPTY_ARGS_NUDGE = `Your last tool call had EMPTY arguments {}.
+Call the same tool again with ALL required parameters filled in as valid JSON.
+Examples:
+- write_file: {"path":"hello.py","content":"print(1)"}
+- bash: {"command":"python3 hello.py"}
+- read_file: {"path":"hello.py"}
+Do not call tools with empty {}.`;
+
 async function generateWithRetry(
   client: ReturnType<typeof createClient>,
   args: Parameters<ReturnType<typeof createClient>["generate"]>[0],
@@ -113,6 +132,30 @@ export async function runAgentLoop(opts: {
     );
 
     if (response.tool_calls && response.tool_calls.length > 0) {
+      // Detect empty-arg tool calls (common with DeepSeek DSML first turn)
+      const emptyIds = response.tool_calls.filter((tc) =>
+        isEmptyArgs(tc.function?.arguments)
+      );
+      if (emptyIds.length > 0 && emptyIds.length === response.tool_calls.length) {
+        opts.onStep?.(steps, `empty tool args — retry nudge`);
+        messages.push({
+          role: "assistant",
+          content: response.content || "",
+          tool_calls: response.tool_calls,
+        });
+        // Return error results for empty calls so the model sees failure
+        for (const tc of response.tool_calls) {
+          messages.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            name: tc.function.name,
+            content: `ERROR: empty arguments {}. Required parameters missing for ${tc.function.name}.`,
+          });
+        }
+        messages.push({ role: "user", content: EMPTY_ARGS_NUDGE });
+        continue;
+      }
+
       messages.push({
         role: "assistant",
         content: response.content || "",
@@ -124,6 +167,8 @@ export async function runAgentLoop(opts: {
         let result: string;
         if (!tool) {
           result = `Unknown tool: ${tc.function.name}`;
+        } else if (isEmptyArgs(tc.function.arguments)) {
+          result = `ERROR: empty arguments {}. Re-call ${tc.function.name} with required fields filled.`;
         } else {
           let args: Record<string, unknown> = {};
           try {
@@ -167,7 +212,7 @@ export async function runAgentLoop(opts: {
           role: "tool",
           tool_call_id: tc.id,
           name: tc.function.name,
-          content: result,
+          content: result!,
         });
       }
       continue;
