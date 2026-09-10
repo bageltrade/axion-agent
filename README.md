@@ -170,3 +170,16 @@ TUI / CLI
 MIT
 
 Built for Axion.
+
+## DeepSeek Free (primary)
+
+Axion vendors [deepseek-free-v1](https://github.com/bageltrade/deepseek-free-v1) — OpenAI-compatible reverse of chat.deepseek.com.
+
+```bash
+export DEEPSEEK_TOKEN="your_userToken_from_chat.deepseek.com_localStorage"
+npm run deepseek          # starts http://127.0.0.1:8000
+# other terminal:
+npm run tui               # default_model is deepseek/deepseek-v4-flash
+```
+
+NVIDIA is configured as `fallback_model` if DeepSeek is down.

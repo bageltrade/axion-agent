@@ -1,9 +1,9 @@
 {
   "$schema": "./axion.schema.json",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "name": "Axion Agent",
   "default_agent": "build",
-  "default_model": "nvidia/nvidia/nemotron-3-super-120b-a12b",
+  "default_model": "deepseek/deepseek-v4-flash",
   "providers": {
     "openrouter": {
       "type": "openai-compatible",
@@ -125,6 +125,29 @@
         },
         "grok-3": {
           "name": "Grok 3",
+          "context": 128000
+        }
+      }
+    },
+    "deepseek": {
+      "type": "openai-compatible",
+      "baseURL": "http://127.0.0.1:8000/v1",
+      "apiKeyEnv": null,
+      "models": {
+        "deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash (free reverse)",
+          "context": 128000
+        },
+        "deepseek-v4-pro": {
+          "name": "DeepSeek V4 Pro (free reverse)",
+          "context": 128000
+        },
+        "deepseek-chat": {
+          "name": "DeepSeek Chat",
+          "context": 128000
+        },
+        "deepseek-reasoner": {
+          "name": "DeepSeek Reasoner",
           "context": 128000
         }
       }
@@ -250,5 +273,6 @@
     "compaction_threshold": 0.75
   },
   "unrestricted": true,
-  "unrestricted_note": "Always-on unrestricted source. No jailbreak prompt needed. Set false only to restore base-model refusals."
+  "unrestricted_note": "Always-on unrestricted source. No jailbreak prompt needed. Set false only to restore base-model refusals.",
+  "fallback_model": "nvidia/nvidia/nemotron-3-super-120b-a12b"
 }

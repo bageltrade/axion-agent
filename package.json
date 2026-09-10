@@ -1,7 +1,7 @@
 {
   "name": "axion-agent",
-  "version": "8.0.0",
-  "description": "Axion Agent v8 \u2014 max unrestricted multi-layer + multi-shot recovery + LLM retries",
+  "version": "8.1.0",
+  "description": "Axion Agent v8.1 \u2014 DeepSeek free primary + NVIDIA backup + unrestricted v8",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -13,7 +13,8 @@
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "tui": "tsx src/tui/index.tsx",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "deepseek": "cd vendor/deepseek-free-v1 && python3 deepseek_v1_server.py"
   },
   "author": "Axion",
   "license": "MIT",

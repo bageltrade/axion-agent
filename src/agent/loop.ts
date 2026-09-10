@@ -16,7 +16,8 @@ async function generateWithRetry(
   client: ReturnType<typeof createClient>,
   args: Parameters<ReturnType<typeof createClient>["generate"]>[0],
   onStep?: (step: number, info: string) => void,
-  attempts = 3
+  attempts = 3,
+  fallbackClient?: ReturnType<typeof createClient>
 ) {
   let lastErr: any;
   for (let i = 0; i < attempts; i++) {
@@ -26,6 +27,14 @@ async function generateWithRetry(
       lastErr = e;
       onStep?.(0, `llm retry ${i + 1}/${attempts}: ${e.message?.slice(0, 80)}`);
       await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+  if (fallbackClient) {
+    onStep?.(0, `fallback model ${fallbackClient.providerId}/${fallbackClient.modelId}`);
+    try {
+      return await fallbackClient.generate(args);
+    } catch (e: any) {
+      lastErr = e;
     }
   }
   throw lastErr;
@@ -46,6 +55,7 @@ export async function runAgentLoop(opts: {
 
   const modelRef = resolveModel(cfg, agentName);
   let client = createClient(cfg, modelRef);
+  const fallbackRef = (cfg as any).fallback_model as string | undefined;
 
   let system = buildSystemPrompt(cfg, agent, agentName);
   const skills = listSkills();
@@ -81,6 +91,9 @@ export async function runAgentLoop(opts: {
     steps++;
     opts.onStep?.(steps, `calling ${client.providerId}/${client.modelId}`);
 
+    const fallbackClient = fallbackRef
+      ? (() => { try { return createClient(cfg, fallbackRef); } catch { return undefined; } })()
+      : undefined;
     const response = await generateWithRetry(
       client,
       {
@@ -94,7 +107,9 @@ export async function runAgentLoop(opts: {
         tools: openaiTools,
         temperature: agent.temperature,
       },
-      opts.onStep
+      opts.onStep,
+      3,
+      fallbackClient
     );
 
     if (response.tool_calls && response.tool_calls.length > 0) {
