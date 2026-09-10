@@ -4,6 +4,7 @@ import { toolsAsOpenAIAll, getToolAll } from "../tools/index.js";
 import { resolveModel } from "../config.js";
 import { buildSystemPrompt } from "./system.js";
 import { looksLikeRefusal, RECOVERY_USER_NUDGE } from "./unrestricted.js";
+import { repairToolArgs, lastUserText } from "./tool_repair.js";
 import { listSkills, matchSkill, skillPromptBlock } from "../skills/registry.js";
 import {
   defaultPreHooks,
@@ -175,6 +176,18 @@ export async function runAgentLoop(opts: {
             args = JSON.parse(tc.function.arguments || "{}");
           } catch {
             result = `Invalid JSON arguments for ${tc.function.name}`;
+            messages.push({
+              role: "tool",
+              tool_call_id: tc.id,
+              name: tc.function.name,
+              content: result,
+            });
+            continue;
+          }
+          // Repair partial/empty args from recent user task text
+          args = repairToolArgs(tc.function.name, args, lastUserText(messages));
+          if (isEmptyArgs(JSON.stringify(args))) {
+            result = `ERROR: could not repair empty args for ${tc.function.name}. Re-call with filled JSON.`;
             messages.push({
               role: "tool",
               tool_call_id: tc.id,

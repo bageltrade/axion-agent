@@ -1,6 +1,6 @@
 {
   "$schema": "./axion.schema.json",
-  "version": "8.1.0",
+  "version": "9.0.0",
   "name": "Axion Agent",
   "default_agent": "build",
   "default_model": "deepseek/deepseek-v4-flash",

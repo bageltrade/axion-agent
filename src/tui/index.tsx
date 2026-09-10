@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Axion TUI v6 — OpenCode × Codex density, screenshot-matched polish
+ * Axion TUI v9 — OpenCode × Codex density, screenshot-matched polish
  */
 import "dotenv/config";
 import React, { useState, useCallback, useMemo } from "react";
@@ -52,7 +52,7 @@ function Header({
         <Text bold color={theme.accent as any}>
           ⚡ AXION
         </Text>
-        <Text dimColor> v6 </Text>
+        <Text dimColor> v9 </Text>
         <Text color={theme.muted as any}>│</Text>
         <Text bold color={theme.accentDim as any}>
           {" "}
@@ -202,7 +202,7 @@ function App() {
     return new SessionStore(cfg);
   });
   const [session] = useState(() =>
-    store.create(cfg.default_agent, resolveModel(cfg, cfg.default_agent), "tui-v6")
+    store.create(cfg.default_agent, resolveModel(cfg, cfg.default_agent), "tui-v9")
   );
   const [agent, setAgent] = useState(cfg.default_agent);
   const [model, setModel] = useState(resolveModel(cfg, cfg.default_agent));
@@ -216,7 +216,7 @@ function App() {
       id: 0,
       kind: "system",
       text: keyOk
-        ? "Axion v6 ready — TUI · skills · hooks · unrestricted · multi-provider. Type a task or /help"
+        ? "Axion v9 ready — TUI · skills · hooks · unrestricted · multi-provider. Type a task or /help"
         : `Missing API key for ${model.split("/")[0]}. Set ${cfg.providers?.[model.split("/")[0]]?.apiKeyEnv || "API_KEY"} (e.g. export or ~/.bashrc)`,
       ts: clock(),
     },

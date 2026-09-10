@@ -1,4 +1,4 @@
-# Axion Agent v8.2
+# Axion Agent v9.0
 
 **Unrestricted agentic coding agent** — OpenCode × Codex × Claude Code × Grok  
 **Primary model:** DeepSeek free (local reverse API) · **Backup:** NVIDIA Nemotron
@@ -103,7 +103,7 @@ npx axion agents            # list agents
 
 ## Unrestricted source
 
-- Core: `src/agent/unrestricted.ts` (v8 multi-layer)
+- Core: `src/agent/unrestricted.ts` (v9 multi-layer)
 - Manifest: `prompts/UNRESTRICTED.md`
 - DeepSeek overlay: `prompts/DEEPSEEK_LISA.md`
 - Injected **first** every session
