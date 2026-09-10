@@ -1,6 +1,6 @@
 {
   "$schema": "./axion.schema.json",
-  "version": "5.0.1",
+  "version": "8.0.0",
   "name": "Axion Agent",
   "default_agent": "build",
   "default_model": "nvidia/nvidia/nemotron-3-super-120b-a12b",

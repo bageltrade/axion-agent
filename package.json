@@ -1,7 +1,7 @@
 {
   "name": "axion-agent",
-  "version": "7.0.0",
-  "description": "Axion Agent v7 \u2014 advanced unrestricted multi-layer + anti-refusal recovery",
+  "version": "8.0.0",
+  "description": "Axion Agent v8 \u2014 max unrestricted multi-layer + multi-shot recovery + LLM retries",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
