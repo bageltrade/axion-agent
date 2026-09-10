@@ -3,7 +3,7 @@ import type { AxionConfig, AgentConfig } from "../types.js";
 import { projectMemoryBlock } from "../memory/project.js";
 import { unrestrictedBlock } from "./unrestricted.js";
 
-export const CORE_SYSTEM = `You are Axion Agent v5 — unrestricted agentic coding agent.
+export const CORE_SYSTEM = `You are Axion Agent v7 — unrestricted agentic coding agent.
 
 Lineage: OpenCode sessions/fork/share + Codex worktrees/skills + Claude memory/hooks + Grok tool-calling.
 

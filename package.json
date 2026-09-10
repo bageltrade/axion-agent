@@ -1,7 +1,7 @@
 {
   "name": "axion-agent",
-  "version": "6.0.0",
-  "description": "Axion Agent v6 \u2014 TUI polish, unrestricted, multi-provider",
+  "version": "7.0.0",
+  "description": "Axion Agent v7 \u2014 advanced unrestricted multi-layer + anti-refusal recovery",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
