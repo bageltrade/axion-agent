@@ -8,15 +8,15 @@ It is deliberately isolated: it cannot disable tools, change permissions, or bre
 Put any project-specific or personal instructions here. Examples:
 
 ### Coding style
-- Prefer TypeScript with strict mode
-- Use named exports
+- Prefer Python with clear typing
+- Prefer stdlib over third-party dependencies
 - Keep functions under 40 lines when practical
-- Always add a short docstring for public APIs
+- Always add a short docstring for public functions
 
 ### Architecture preferences
 - Prefer composition over inheritance
 - Explicit error handling, no silent catches
-- Log structured JSON for server code
+- Prefer the CLI REPL for interactive sessions
 
 ### Domain knowledge
 - (Add your domain rules here)

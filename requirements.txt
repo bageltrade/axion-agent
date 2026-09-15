@@ -1,0 +1,5 @@
+# Axion Agent (Python build) uses the Python standard library only.
+# No third-party packages are required to run the agent.
+#
+# The vendored deepseek-v1-server.py has its own deps —
+# see deepseek-requirements.txt for those.

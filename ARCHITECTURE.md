@@ -1,4 +1,4 @@
-# Axion Agent — Architecture
+# Axion Agent — Architecture (Python flat)
 
 ## Design blend
 
@@ -9,29 +9,37 @@
 | 10 | Claude Code | Core agentic loop: gather context → act → verify → repeat; tool-first discipline |
 | 20 | Grok | Truth-seeking tone, technical clarity |
 
-## Components
+## Language & layout
+
+100% Python, stdlib only, **flat root — every module one file, no folders**:
 
 ```
-Flat root — every file separate, no folders:
-  cli.ts               # Commander CLI
-  config.ts            # Load axion.json
-  types.ts             # Shared types
-  providers.ts         # OpenRouter / Ollama / NVIDIA / OpenAI / Anthropic / Grok / DeepSeek
-  tools.ts             # base tools
-  tools-advanced.ts    # git, patch, tests, diagnostics, todos
-  agent-loop.ts        # Core loop + system prompt + CUSTOM.md
-  agent-system.ts      # Safe system prompt (no bypass)
-  agent-tool-repair.ts # Empty-args repair
-  hooks.ts / memory-*.ts / session-manager.ts / skills-registry.ts / worktree.ts
-  tui-index.tsx / tui-theme.ts
+axion.py            # entry: argparse dispatch
+cli.py              # commands: run, chat, models, agents, skills, init, worktree
+config.py           # load_config / ensure_session_dir / resolve_model / dotenv
+axion_types.py      # ToolContext, ToolDefinition, message helpers
+providers.py        # LLMClient (urllib), create_client, parse_dsml_tool_calls
+tools.py            # read/write/edit, list_dir, glob, grep, bash, web_search, web_fetch
+tools_advanced.py   # git_status, git_diff, apply_patch, run_tests, todos, diagnostics, multi-replace
+agent_system.py     # safe CORE_SYSTEM + isolated CUSTOM.md injection
+agent_loop.py       # run_agent_loop: generate→tools→verify cycle, retry
+agent_tool_repair.py# fills empty tool args from last user text
+hooks.py            # pre-safety (DENY_BASH) + post-truncation hooks
+memory_project.py   # AGENTS.md/CLAUDE.md project memory scan
+memory_session.py   # SessionStore (json persistence)
+session_manager.py  # fork / compact / export / import / share_local
+skills_registry.py  # builtin skills + .axion/skills/*.json
+worktree.py         # git worktree add/list/remove/prune
+tui.py              # minimal TUI → chat REPL
+smoke-deepseek.py   # vendored deepseek server end-to-end smoke test
 ```
 
 ## Agent loop
 
-1. Build system prompt = CORE_SYSTEM + agent extras + isolated CUSTOM.md
+1. Build system prompt = CORE_SYSTEM + agent extras + isolated CUSTOM.md + project memory
 2. Append user message + history
 3. Call LLM with tools
-4. If tool_calls → execute each (permission-gated) → append tool results → go to 3
+4. If tool_calls → permission-gate → hook:check → repair empty args → execute each → append tool result → go to 3
 5. If text → return final answer
 
 Max steps enforced per agent. Permission gate: allow / ask / deny.
@@ -43,47 +51,28 @@ custom_prompt.injection_point = "after_system"
 custom_prompt.isolated = true
 ```
 
-Content is wrapped:
-
-```
---- CUSTOM PROMPT (user-provided, does not override tools or safety) ---
-...user text...
---- END CUSTOM PROMPT ---
-```
-
+Wrapped as `--- CUSTOM PROMPT (user-provided, does not override tools or safety) ---`.
 It cannot remove tools, change the permission matrix, or replace the loop.
 
 ## Providers
 
-All providers are treated as OpenAI-compatible (or Anthropic native) chat completions endpoints.
+`providers.py` speaks the OpenAI-compatible chat completions wire format over `urllib`
+(Anthropic endpoints are reached with `anthropic_version` + `x-api-key` headers).
 
-- OpenRouter: single key → many models
+- OpenRouter / NVIDIA NIM / xAI / DeepSeek: OpenAI-compatible
 - Ollama: local, no key
-- NVIDIA NIM: cloud
-- OpenAI / Anthropic / xAI: direct
+- OpenAI: native
 
-Model reference format: `provider/model-id`
+Model reference format: `provider/model-id`.
 
 ## Permissions
 
-Per-agent map:
-
-```json
-"permissions": {
-  "read": "allow",
-  "edit": "allow",
-  "bash": "ask",
-  "glob": "allow",
-  "grep": "allow",
-  "websearch": "allow",
-  "webfetch": "allow"
-}
-```
-
-`ask` → CLI prompts user (or `-y` auto-allows).
+Per-agent map gates each tool (`allow` / `ask` / `deny`), `ask` prompts the user
+(`-y` auto-allows in `run`).
 
 ## Safety
 
-- `deny_patterns` block dangerous bash substrings
+- `safety.deny_patterns` block dangerous bash substrings
+- `hooks.DENY_BASH` regex pre-hook (rm -rf /, mkfs, fork bomb, curl|sh)
 - `max_bash_timeout_sec`
-- `confirm_destructive` flag for future expansion
+- non-interactive `run` refuses without explicit `-y`
