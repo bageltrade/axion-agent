@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname, relative } from "path";
 import { execSync } from "child_process";
 import { createPatch, applyPatch, parsePatch } from "diff";
-import type { ToolDefinition, ToolContext } from "../types.js";
+import type { ToolDefinition, ToolContext } from "./types.js";
 
 function gate(ctx: ToolContext, key: string, detail: string): Promise<boolean> {
   const p = ctx.permissions[key] || "ask";

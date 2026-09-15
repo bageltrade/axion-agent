@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSy
 import { join, relative, resolve, dirname, basename } from "path";
 import { execSync, spawn } from "child_process";
 import { glob } from "glob";
-import type { ToolDefinition, ToolContext, AgentPermissions } from "../types.js";
+import type { ToolDefinition, ToolContext, AgentPermissions } from "./types.js";
 
 function checkPerm(perms: AgentPermissions, key: string): "allow" | "ask" | "deny" {
   return perms[key] || "ask";
@@ -289,7 +289,7 @@ export function getTool(name: string): ToolDefinition | undefined {
 }
 
 // --- advanced tools merge ---
-import { advancedTools } from "./advanced.js";
+import { advancedTools } from "./tools-advanced.js";
 
 export const allTools: ToolDefinition[] = [...tools, ...advancedTools];
 

@@ -2,7 +2,7 @@
  * Hooks — pre/post tool hooks for safety, logging, and policy.
  * OpenCode-inspired permission layer + Claude Code hook style.
  */
-import type { ToolContext } from "../types.js";
+import type { ToolContext } from "./types.js";
 
 export type HookResult = { allow: boolean; reason?: string; modifiedArgs?: Record<string, unknown> };
 

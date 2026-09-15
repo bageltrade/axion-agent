@@ -9,7 +9,8 @@ const DEFAULT_CONFIG_PATHS = [
   join(process.cwd(), "axion.json"),
   join(process.cwd(), ".axion", "axion.json"),
   join(process.env.HOME || "~", ".config", "axion", "axion.json"),
-  join(__dirname, "..", "config", "axion.json"),
+  join(__dirname, "..", "axion.json"),
+  join(__dirname, "axion.json"),
 ];
 
 export function loadConfig(customPath?: string): AxionConfig {
@@ -33,7 +34,7 @@ export function loadConfig(customPath?: string): AxionConfig {
 
   throw new Error(
     `No axion.json found. Searched:\n${paths.map((p) => `  - ${p}`).join("\n")}\n` +
-      `Copy config/axion.json to your project root or ~/.config/axion/axion.json`
+      `Copy axion.json to your project root or ~/.config/axion/axion.json`
   );
 }
 

@@ -7,21 +7,23 @@
 | 50 | OpenCode | Multi-provider registry, Plan/Build agents, permission matrix (allow/ask/deny), sub-agent concept, config-driven agents, session model |
 | 20 | Codex | End-to-end task completion bias, review-quality loop, parallel-ready structure |
 | 10 | Claude Code | Core agentic loop: gather context → act → verify → repeat; tool-first discipline |
-| 20 | Grok | Truth-seeking tone, no gratuitous refusals, technical clarity |
+| 20 | Grok | Truth-seeking tone, technical clarity |
 
 ## Components
 
 ```
-src/
-  cli.ts           # Commander CLI (run / chat / models / agents / init)
-  config.ts        # Load axion.json, resolve model, session dir
-  types.ts         # Shared types
-  providers/
-    index.ts       # OpenRouter / Ollama / NVIDIA / OpenAI / Anthropic / Grok clients
-  tools/
-    index.ts       # read_file, write_file, edit_file, list_dir, glob, grep, bash, web_search
-  agent/
-    loop.ts        # Core while-loop + system prompt + isolated custom prompt
+Flat root — every file separate, no folders:
+  cli.ts               # Commander CLI
+  config.ts            # Load axion.json
+  types.ts             # Shared types
+  providers.ts         # OpenRouter / Ollama / NVIDIA / OpenAI / Anthropic / Grok / DeepSeek
+  tools.ts             # base tools
+  tools-advanced.ts    # git, patch, tests, diagnostics, todos
+  agent-loop.ts        # Core loop + system prompt + CUSTOM.md
+  agent-system.ts      # Safe system prompt (no bypass)
+  agent-tool-repair.ts # Empty-args repair
+  hooks.ts / memory-*.ts / session-manager.ts / skills-registry.ts / worktree.ts
+  tui-index.tsx / tui-theme.ts
 ```
 
 ## Agent loop

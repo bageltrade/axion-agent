@@ -1,9 +1,9 @@
 {
   "$schema": "./axion.schema.json",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "name": "Axion Agent",
   "default_agent": "build",
-  "default_model": "deepseek/deepseek-v4-flash",
+  "default_model": "nvidia/nvidia/nemotron-3-super-120b-a12b",
   "providers": {
     "openrouter": {
       "type": "openai-compatible",
@@ -131,7 +131,7 @@
     },
     "deepseek": {
       "type": "openai-compatible",
-      "baseURL": "http://127.0.0.1:8000/v1",
+      "baseURL": "https://api.deepseek.com/v1",
       "apiKeyEnv": null,
       "models": {
         "deepseek-v4-flash": {
@@ -237,7 +237,7 @@
   },
   "custom_prompt": {
     "enabled": true,
-    "path": "./prompts/CUSTOM.md",
+    "path": "./CUSTOM.md",
     "injection_point": "after_system",
     "isolated": true,
     "note": "Custom prompt is appended after the core system prompt. It never overrides agentic tools, permissions, or the agent loop."
@@ -272,7 +272,5 @@
     "auto_title": true,
     "compaction_threshold": 0.75
   },
-  "unrestricted": true,
-  "unrestricted_note": "Always-on unrestricted source. No jailbreak prompt needed. Set false only to restore base-model refusals.",
   "fallback_model": "nvidia/nvidia/nemotron-3-super-120b-a12b"
 }

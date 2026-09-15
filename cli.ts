@@ -1,11 +1,11 @@
-import "dotenv/config";
 #!/usr/bin/env node
+import "dotenv/config";
 import { Command } from "commander";
 import chalk from "chalk";
 import { createInterface } from "readline";
 import { loadConfig, ensureSessionDir, resolveModel } from "./config.js";
-import { listAvailableModels as listModels } from "./providers/index.js";
-import { runAgentLoop } from "./agent/loop.js";
+import { listAvailableModels as listModels } from "./providers.js";
+import { runAgentLoop } from "./agent-loop.js";
 import type { Message } from "./types.js";
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
@@ -205,16 +205,23 @@ program
       console.log(chalk.yellow("axion.json already exists"));
       return;
     }
-    const defaultCfg = readFileSync(
-      new URL("../config/axion.json", import.meta.url),
-      "utf-8"
-    );
-    writeFileSync(target, defaultCfg);
-    const promptsDir = join(process.cwd(), "prompts");
-    if (!existsSync(promptsDir)) {
-      mkdirSync(promptsDir, { recursive: true });
+    const candidates = [
+      new URL("../axion.json", import.meta.url),
+      new URL("./axion.json", import.meta.url),
+    ];
+    let defaultCfg = "";
+    for (const u of candidates) {
+      try {
+        defaultCfg = readFileSync(u, "utf-8");
+        if (defaultCfg) break;
+      } catch { /* try next */ }
     }
-    const custom = join(promptsDir, "CUSTOM.md");
+    if (!defaultCfg) {
+      console.error(chalk.red("Could not find bundled axion.json"));
+      return;
+    }
+    writeFileSync(target, defaultCfg);
+    const custom = join(process.cwd(), "CUSTOM.md");
     if (!existsSync(custom)) {
       writeFileSync(
         custom,
@@ -238,8 +245,8 @@ Example:
 `
       );
     }
-    console.log(chalk.green("Created axion.json and prompts/CUSTOM.md"));
-    console.log(chalk.dim("Edit prompts/CUSTOM.md for project-specific instructions."));
+    console.log(chalk.green("Created axion.json and CUSTOM.md"));
+    console.log(chalk.dim("Edit CUSTOM.md for project-specific instructions."));
   });
 
 program.parse();

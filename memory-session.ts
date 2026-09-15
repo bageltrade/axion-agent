@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { randomUUID } from "crypto";
-import type { Message, SessionState, AxionConfig } from "../types.js";
+import type { Message, SessionState, AxionConfig } from "./types.js";
 
 export class SessionStore {
   private dir: string;

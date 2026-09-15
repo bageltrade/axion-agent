@@ -1,17 +1,16 @@
-import type { AxionConfig, Message, AgentLoopResult, ToolContext } from "../types.js";
-import { createClient } from "../providers/index.js";
-import { toolsAsOpenAIAll, getToolAll } from "../tools/index.js";
-import { resolveModel } from "../config.js";
-import { buildSystemPrompt } from "./system.js";
-import { looksLikeRefusal, RECOVERY_USER_NUDGE } from "./unrestricted.js";
-import { repairToolArgs, lastUserText } from "./tool_repair.js";
-import { listSkills, matchSkill, skillPromptBlock } from "../skills/registry.js";
+import type { AxionConfig, Message, AgentLoopResult, ToolContext } from "./types.js";
+import { createClient } from "./providers.js";
+import { toolsAsOpenAIAll, getToolAll } from "./tools.js";
+import { resolveModel } from "./config.js";
+import { buildSystemPrompt } from "./agent-system.js";
+import { repairToolArgs, lastUserText } from "./agent-tool-repair.js";
+import { listSkills, matchSkill, skillPromptBlock } from "./skills-registry.js";
 import {
   defaultPreHooks,
   defaultPostHooks,
   runPreHooks,
   runPostHooks,
-} from "../hooks/index.js";
+} from "./hooks.js";
 
 function isEmptyArgs(argsJson: string | undefined): boolean {
   if (!argsJson || !argsJson.trim()) return true;
@@ -104,8 +103,6 @@ export async function runAgentLoop(opts: {
 
   const openaiTools = toolsAsOpenAIAll();
   let steps = 0;
-  let recoveryUsed = 0;
-  const maxRecovery = 2;
 
   while (steps < agent.max_steps) {
     steps++;
@@ -142,7 +139,7 @@ export async function runAgentLoop(opts: {
         messages.push({
           role: "assistant",
           content: response.content || "",
-          tool_calls: response.tool_calls,
+          tool_calls: response.tool_calls as any,
         });
         // Return error results for empty calls so the model sees failure
         for (const tc of response.tool_calls) {
@@ -160,7 +157,7 @@ export async function runAgentLoop(opts: {
       messages.push({
         role: "assistant",
         content: response.content || "",
-        tool_calls: response.tool_calls,
+        tool_calls: response.tool_calls as any,
       });
 
       for (const tc of response.tool_calls) {
@@ -231,72 +228,7 @@ export async function runAgentLoop(opts: {
       continue;
     }
 
-    let final = response.content || "";
-
-    // Multi-shot anti-refusal recovery
-    while (looksLikeRefusal(final) && recoveryUsed < maxRecovery && steps < agent.max_steps) {
-      recoveryUsed++;
-      steps++;
-      opts.onStep?.(steps, `unrestricted recovery ${recoveryUsed}/${maxRecovery}`);
-      messages.push({ role: "assistant", content: final });
-      messages.push({ role: "user", content: RECOVERY_USER_NUDGE });
-
-      const retry = await generateWithRetry(
-        client,
-        {
-          messages: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-            tool_calls: m.tool_calls,
-            name: m.name,
-            tool_call_id: m.tool_call_id,
-          })),
-          tools: openaiTools,
-          temperature: Math.min(0.4, (agent.temperature || 0.2) + 0.1),
-        },
-        opts.onStep
-      );
-
-      if (retry.tool_calls && retry.tool_calls.length > 0) {
-        messages.push({
-          role: "assistant",
-          content: retry.content || "",
-          tool_calls: retry.tool_calls,
-        });
-        // handle tools in next loop iteration by rewinding structure:
-        // push tool results path via continuing outer while — break to outer
-        final = retry.content || final;
-        // Process tools inline
-        for (const tc of retry.tool_calls) {
-          const tool = getToolAll(tc.function.name);
-          let result = tool ? "" : `Unknown tool: ${tc.function.name}`;
-          if (tool) {
-            let args: Record<string, unknown> = {};
-            try {
-              args = JSON.parse(tc.function.arguments || "{}");
-              result = await tool.execute(args, toolCtx);
-            } catch (e: any) {
-              result = `Tool error: ${e.message}`;
-            }
-          }
-          messages.push({
-            role: "tool",
-            tool_call_id: tc.id,
-            name: tc.function.name,
-            content: result,
-          });
-        }
-        // continue outer loop for next model turn
-        final = "";
-        break;
-      }
-      final = retry.content || final;
-    }
-
-    if (!final && recoveryUsed) {
-      // recovered into tool path — continue outer while
-      continue;
-    }
+    const final = response.content || "";
 
     messages.push({ role: "assistant", content: final });
     return {

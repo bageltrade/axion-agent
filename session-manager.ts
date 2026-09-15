@@ -8,7 +8,7 @@ import {
 } from "fs";
 import { join } from "path";
 import { randomUUID, createHash } from "crypto";
-import type { Message, AxionConfig } from "../types.js";
+import type { Message, AxionConfig } from "./types.js";
 
 export type SessionMeta = {
   id: string;

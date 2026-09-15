@@ -7,12 +7,12 @@ import React, { useState, useCallback, useMemo } from "react";
 import { render, Box, Text, useInput, useApp, Spacer } from "ink";
 import Spinner from "ink-spinner";
 import TextInput from "ink-text-input";
-import { loadConfig, resolveModel, ensureSessionDir } from "../config.js";
-import { runAgentLoop } from "../agent/loop.js";
-import { SessionStore } from "../memory/session.js";
-import { listSkills, matchSkill } from "../skills/registry.js";
-import { getTheme, type Theme } from "./theme.js";
-import type { Message, AxionConfig } from "../types.js";
+import { loadConfig, resolveModel, ensureSessionDir } from "./config.js";
+import { runAgentLoop } from "./agent-loop.js";
+import { SessionStore } from "./memory-session.js";
+import { listSkills, matchSkill } from "./skills-registry.js";
+import { getTheme, type Theme } from "./tui-theme.js";
+import type { Message, AxionConfig } from "./types.js";
 
 type LogEntry = {
   id: number;
@@ -216,7 +216,7 @@ function App() {
       id: 0,
       kind: "system",
       text: keyOk
-        ? "Axion v9 ready — TUI · skills · hooks · unrestricted · multi-provider. Type a task or /help"
+        ? "Axion v9 ready — TUI · skills · hooks · multi-provider. Type a task or /help"
         : `Missing API key for ${model.split("/")[0]}. Set ${cfg.providers?.[model.split("/")[0]]?.apiKeyEnv || "API_KEY"} (e.g. export or ~/.bashrc)`,
       ts: clock(),
     },

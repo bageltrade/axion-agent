@@ -1,5 +1,5 @@
-import type { AxionConfig } from "../types.js";
-import { getProviderAndModelId } from "../config.js";
+import type { AxionConfig } from "./types.js";
+import { getProviderAndModelId } from "./config.js";
 
 export interface LLMClient {
   providerId: string;
@@ -177,7 +177,7 @@ async function callOpenAICompatible(opts: {
     const text = await res.text();
     throw new Error(`LLM request failed (${res.status}): ${text.slice(0, 800)}`);
   }
-  const data = await res.json();
+  const data: any = await res.json();
   const choice = data.choices?.[0];
   if (!choice) throw new Error("No choices in LLM response");
   let content = choice.message?.content ?? null;
